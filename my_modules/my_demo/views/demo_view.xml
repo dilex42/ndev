@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+
+        <record model="ir.ui.view" id="demo_tree_view">
+            <field name="name">demo.tree</field>
+            <field name="model">demo.demo</field>
+            <field name="arch" type="xml">
+                <tree string="Demo Tree">
+                    <field name="name"/>
+                    <field name="lead_id"/>
+                    <field name="customer"/>
+                    <field name="salesperson"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record model="ir.ui.view" id="demo_search_view">
+            <field name="name">demo.search</field>
+            <field name="model">demo.demo</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="customer"/>
+                    <field name="lead_id"/>
+                    <filter name="my_demos" string="My demos"
+                            domain="[('salesperson.id', '=', uid)]"/>
+                    <group string="Group By">
+                        <filter name="by_customer" string="customer"
+                                context="{'group_by': 'customer'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+
+        <record model="ir.ui.view" id="demo_form_view">
+            <field name="name">demo.form</field>
+            <field name="model">demo.demo</field>
+            <field name="arch" type="xml">
+                <form string="demo Form">
+                    <header>
+                        <button string="Set to planned" type="object" name="planned_progressbar" attrs="{'invisible': [('state', '=', 'planned')]}"/>
+                        <button string="Cancell" type="object" name="cancelled_progressbar" attrs="{'invisible': [('state','=','cancelled')]}"/>
+                        <button string="Done" type="object" name="done_progressbar" attrs="{'invisible': [('state','=','done')]}"/>
+                        <field name="state" widget="statusbar" clickable="True"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="customer"/>
+                            <field name="salesperson"/>
+                            <field name="done_date"/>
+                            <field name="lead_id"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+
+        <record model="ir.ui.view" id="view_demo_kanban">
+            <field name="name">demo.demo.kanban</field>
+            <field name="model">demo.demo</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="lead_id">
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div
+                                    t-attf-class="
+                                                  oe_kanban_global_click_edit oe_semantic_html_override
+                                                  oe_kanban_card {{record.group_fancy==1 ? 'oe_kanban_card_fancy' : ''}}">
+                                <div class="oe_dropdown_kanban">
+                                    <!-- dropdown menu -->
+                                    <div class="oe_dropdown_toggle">
+                                        <i class="fa fa-bars fa-lg" title="Manage" aria-label="Manage"/>
+                                        <ul class="oe_dropdown_menu">
+                                            <li>
+                                                <a type="delete">Delete</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="oe_clear"></div>
+                                </div>
+                                <div t-attf-class="oe_kanban_content">
+                                    <!-- title -->
+                                    demo name:
+                                    <field name="name"/>
+                                    <br/>
+                                    Done date:
+                                    <field name="done_date"/>
+                                    <br/>
+                                    customer:
+                                    <field name="customer"/>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+<!-- window action -->
+        <!--
+            The following tag is an action definition for a "window action",
+            that is an action opening a view or a set of views
+        -->
+        <record model="ir.actions.act_window" id="demo_list_action">
+            <field name="name">Demo</field>
+            <field name="res_model">demo.demo</field>
+            <field name="view_mode">tree,form,kanban</field>
+            <field name="context" eval="{'search_default_my_demos': 1}"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create the first demo
+                </p>
+            </field>
+        </record>
+
+
+
+        
+         <record id="crm_lead_tree_lead_inherited" model="ir.ui.view">
+            <field name="name">crm.lead.tree.lead.inherited</field>
+            <field name="model">crm.lead</field>
+            <field name="inherit_id" ref="crm.crm_case_tree_view_leads"></field>
+            <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="demo_count"></field>
+                <button name="demo_new" string="New demo" class="oe_highlight" type="object"/>
+                <button name="demo_all" string="All demos" class="oe_highlight" type="object"/>
+            </xpath>
+            
+            </field>
+        </record>
+
+
+        <record model="ir.actions.act_window" id="lead_list_action">
+            <field name="name">lead</field>
+            <field name="res_model">crm.lead</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create the first lead
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="test_action_tree">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="crm_lead_tree_lead_inherited"/>
+            <field name="act_window_id" ref="lead_list_action"/>
+        </record>
+
+
+<!-- top level menu: no parent -->
+        <menuitem id="main_demo_menu" name="My Demo"/>
+        <!-- A first level in the left side menu is needed
+             before using action= attribute -->
+        <menuitem id="demo_menu" name="Demo"
+                  parent="main_demo_menu"/>
+        <menuitem id="demos_menu" name="demo list" parent="demo_menu"
+                  action="demo_list_action"/>
+        <menuitem id="leads_menu" name="Leads" parent="demo_menu"
+                  action="lead_list_action"/>
+
+</odoo>
